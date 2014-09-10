@@ -50,6 +50,18 @@ var _ = {};
   // Note: _.each does not have a return value, but rather simply runs the
   // iterator function over each item in the input collection.
   _.each = function(collection, iterator) {
+	var isArray = collection.length === +collection.length;
+	if (isArray) {
+		for (var i = 0; i < collection.length; i++) {
+			if (isArray) iterator(collection[i], i, collection);
+		}
+	}
+	else {
+		var keys_arr = Object.keys(collection);
+		for (var i = 0; i < keys_arr.length; i++) {
+			iterator(collection[keys_arr[i]], keys_arr[i], collection);
+		}
+	}
   };
 
   // Returns the index at which value can be found in the array, or -1 if value
@@ -71,16 +83,37 @@ var _ = {};
 
   // Return all elements of an array that pass a truth test.
   _.filter = function(collection, test) {
+	var res = [];
+	for (var i = 0; i < collection.length; i++) {
+		if (test(collection[i])) res.push(collection[i]); 
+	}
+	return res;
   };
 
   // Return all elements of an array that don't pass a truth test.
   _.reject = function(collection, test) {
     // TIP: see if you can re-use _.filter() here, without simply
     // copying code in and modifying it
+	function rev(test) {
+		return function() { return !test.apply(this, arguments); };
+	};
+	return _.filter(collection, rev(test));
   };
 
   // Produce a duplicate-free version of the array.
   _.uniq = function(array) {
+	var res = [array[0]];
+	for (var i = 1; i < array.length; i++) {
+		var unique = true;
+		for (var j = 0; j < res.length; j++) {
+			if (array[i] === res[j]) {
+				unique = false;
+				break;
+			}
+		}
+		if (unique) res.push(array[i]);
+	}
+	return res;
   };
 
 
@@ -89,6 +122,20 @@ var _ = {};
     // map() is a useful primitive iteration function that works a lot
     // like each(), but in addition to running the operation on all
     // the members, it also maintains an array of results.
+	var res = [];
+	var isArray = collection.length === +collection.length;
+	if (isArray) {
+		for (var i = 0; i < collection.length; i++) {
+			if (isArray) res.push(iterator(collection[i], i, collection));
+		}
+	}
+	else {
+		var keys_arr = Object.keys(collection);
+		for (var i = 0; i < keys_arr.length; i++) {
+			res.push(iterator(collection[keys_arr[i]], keys_arr[i], collection));
+		}
+	}
+	return res;
   };
 
   /*

@@ -326,6 +326,18 @@ var _ = {};
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+	var res = array.slice();
+	
+	for (var i = 0; i < res.length - 1; i++) {
+		for (var j = 1; j < res.length; j++) {
+			if(Math.random() < 0.5) {
+				var temp = res[i];
+				res[i] = res[j];
+				res[j] = temp;
+			}
+		}
+	}
+	return res;
   };
 
 
@@ -340,6 +352,27 @@ var _ = {};
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+	
+	if (typeof iterator !== 'function') {
+		var str = iterator;
+		iterator = function(item) { return item[str];};
+	}
+	var res = [];
+	_.each(collection, function(item) { res.push(item); });
+	
+	for (var i = 0; i < res.length - 1; i++) {
+		for (var j = i + 1; j < res.length; j++) {
+			if (iterator(res[i]) > iterator(res[j]) || 
+			!res[i]) {
+				var temp = res[i];
+				res[i] = res[j];
+				res[j] = temp;
+			}
+		}
+	}
+	return res;
+	
+	
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -348,6 +381,19 @@ var _ = {};
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+	var arrays = Array.prototype.slice.call(arguments);
+	var longest = _.sortBy(arrays, 'length')[arrays.length - 1].length;
+	var zipped = [];
+	for (var i = 0; i < longest; i++) {
+		var zipFrag = [];
+		_.each(arrays, function(arr) {
+			if (i >= arr.length) zipFrag.push(undefined);
+			else zipFrag.push(arr[i]);
+		});
+		zipped.push(zipFrag);
+	}
+	
+	return zipped;
   };
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
@@ -355,16 +401,42 @@ var _ = {};
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+	var result = result || [];
+	_.each(nestedArray, function(item) {
+		if (!Array.isArray(item)) result.push(item);
+		else _.flatten(item, result);
+	});
+	return result;
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
+	var common = [], arrays = Array.prototype.slice.call(arguments, 1);
+
+	_.each(arguments[0], function(i) {
+		var ubiq = true;
+		_.each(arrays, function(j) {
+			if (_.indexOf(j, i) < 0) ubiq = false;
+		});
+		if (ubiq) common.push(i);
+	});
+	return common;
   };
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+	var arrays = Array.prototype.slice.call(arguments, 1);
+	var unique = [];
+	_.each(array, function(i) {
+		var selfish = true;
+		_.each(arrays, function(j) {
+			if (_.indexOf(j, i) >= 0) selfish = false;
+		});
+		if (selfish) unique.push(i);
+	});
+	return unique;
   };
 
 
@@ -378,6 +450,29 @@ var _ = {};
   //
   // See the Underbar readme for details.
   _.throttle = function(func, wait) {
+	var lastCall;
+	var futureCall;
+	var res;
+	
+	return function throttled() {
+		var now = Date.now();
+		if(!lastCall || now - lastCall > wait) {
+			res = func.apply(this, arguments);
+			lastCall = now;
+			return res;
+		}
+		else {
+			if (futureCall) {
+				setTimeout(throttled, futureCall + wait);
+				futureCall += wait;
+			}
+			else {
+				futureCall = lastCall + wait;
+				setTimeout(throttled, futureCall - now);
+			}
+		}
+		return res;
+	};
   };
 
 }).call(this);
